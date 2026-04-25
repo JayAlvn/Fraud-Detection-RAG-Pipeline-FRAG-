@@ -24,3 +24,5 @@ logs/
 # Uploads
 uploads/
 temp/
+
+.env
