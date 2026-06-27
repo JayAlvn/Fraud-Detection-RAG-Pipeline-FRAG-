@@ -11,18 +11,30 @@ import './App.css';
 type Message = { role: 'user' | 'assistant'; content: string };
 type Retrieval = { source: string; score: number };
 type Risk = { level: string; score: number; factors: { name: string; weight: number }[] };
+type Doc = { id: string; name: string; chunks: number };
+type Usage = { prompt_tokens: number; completion_tokens: number; total_tokens: number; context_window: number };
+
+const EMPTY_USAGE: Usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, context_window: 4096 };
 
 function App() {
   const [theme, setTheme] = useState<ThemeColors>(THEMES[0].colors);
   const [finding, setFinding] = useState('');
   const [citations, setCitations] = useState<string[]>([]);
   const [retrieval, setRetrieval] = useState<Retrieval[]>([]);
+  const [risk, setRisk] = useState<Risk>({ level: '', score: 0, factors: [] });
   const [mode, setMode] = useState<'naive' | 'basic'>('naive');
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatVisible, setChatVisible] = useState(true);
   const [layoutKey, setLayoutKey] = useState(0);
-  const [risk, setRisk] = useState<Risk>({ level: '', score: 0, factors: [] });
+
+  // Lifted up from ContextPane so they survive the chat-toggle remount:
+  const [documents, setDocuments] = useState<Doc[]>([]);
+  const [activeDoc, setActiveDoc] = useState<string | null>(null);
+
+  // Real token usage from Ollama:
+  const [usage, setUsage] = useState<Usage>(EMPTY_USAGE);
+  const [tokensBurned, setTokensBurned] = useState(0);
 
   const sendPrompt = async (prompt: string) => {
     setMessages(prev => [...prev, { role: 'user', content: prompt }]);
@@ -32,7 +44,7 @@ function App() {
       const res = await fetch('http://localhost:8000/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: prompt, mode }),
+        body: JSON.stringify({ query: prompt, mode, source: activeDoc }),
       });
       if (!res.ok) {
         const detail = await res.text();
@@ -47,6 +59,9 @@ function App() {
         score: data.risk_score ?? 0,
         factors: data.factors ?? [],
       });
+      const u: Usage = data.usage ?? EMPTY_USAGE;
+      setUsage(u);
+      setTokensBurned(t => t + (u.total_tokens ?? 0));
       setMessages(prev => [...prev, { role: 'assistant', content: data.finding }]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
@@ -54,6 +69,7 @@ function App() {
       setCitations([]);
       setRetrieval([]);
       setRisk({ level: '', score: 0, factors: [] });
+      setUsage(EMPTY_USAGE);
       setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${msg}` }]);
     } finally {
       setLoading(false);
@@ -157,7 +173,14 @@ function App() {
 
         {/* Right: Files + Context Window */}
         <Panel id="files" defaultSize={25} minSize={15} className="min-w-0">
-          <ContextPane />
+          <ContextPane
+            documents={documents}
+            setDocuments={setDocuments}
+            activeDoc={activeDoc}
+            setActiveDoc={setActiveDoc}
+            usage={usage}
+            tokensBurned={tokensBurned}
+          />
         </Panel>
 
       </Group>

@@ -53,13 +53,13 @@ export function CitationPane({ citations, retrieval, accent }: CitationPaneProps
                 }}
               >
                 <p
-                  className="text-[10px] font-semibold uppercase tracking-wider mb-1.5"
+                  className="text-[15px] font-semibold uppercase tracking-wider mb-1.5"
                   style={{ color: 'var(--accent-color)' }}
                 >
                   Source {idx + 1}
                 </p>
                 <p
-                  className="text-xs leading-relaxed break-words"
+                  className="text-[20px] leading-relaxed break-words"
                   style={{ color: 'var(--text-main)', overflowWrap: 'anywhere' }}
                 >
                   {passage}

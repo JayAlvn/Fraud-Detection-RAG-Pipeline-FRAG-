@@ -10,3 +10,4 @@ python-dotenv
 pytest
 python-multipart
 lamma
+rank-bm25
