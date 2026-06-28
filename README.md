@@ -48,23 +48,59 @@ A normal reference document (configuration-management notes) is correctly scored
 
 ## Architecture
 
-```
-            ┌─────────────────────────── Frontend (Tauri + React) ───────────────────────────┐
-            │  Finding + Risk gauge  │  Chat  │  Citations + relevance  │  Documents + tokens  │
-            └───────────────────────────────────────┬───────────────────────────────────────-─┘
-                                                     │ HTTP (JSON)
-            ┌────────────────────────────────────────▼───────────────────────────────────────┐
-            │                          Backend (FastAPI — api.py)                              │
-            │   /upload   /query   /document/{name}   /health                                  │
-            └───────┬───────────────────────────────────────────────────────┬─────────────────┘
-                    │                                                        │
-         ingestion (load → clean → chunk)                    generation (naive | basic)
-                    │                                                        │
-            embedding (all-MiniLM-L6-v2) ───► ChromaDB ◄─── retrieval        └─► Ollama (llama3.2)
-```
+```mermaid
+flowchart TB
+    subgraph FE["Frontend — Tauri + React"]
+        F1["Finding + Risk gauge"]
+        F2["Chat"]
+        F3["Citations + relevance"]
+        F4["Documents + tokens"]
+    end
 
----
+    subgraph BE["Backend — FastAPI"]
+        UP["POST /upload"]
+        QY["POST /query"]
+        DOC["DELETE /document"]
+        HL["GET /health"]
+    end
 
+    subgraph PL["Pipeline"]
+        ING["Ingestion<br/>load → clean → chunk"]
+        EMB["Embedding<br/>all-MiniLM-L6-v2"]
+        RET["Retrieval<br/>hybrid: dense + sparse"]
+        GEN["Generation<br/>naive | basic"]
+    end
+
+    DB[("ChromaDB<br/>vector store")]
+    LLM(["Ollama · llama3.2"])
+
+    FE ==>|"HTTP / JSON"| BE
+
+    UP --> ING
+    ING --> EMB
+    EMB ==> DB
+
+    QY --> RET
+    DB ==> RET
+    RET --> GEN
+    GEN -.->|"basic mode only"| LLM
+    LLM -.-> GEN
+
+    DOC -->|"remove chunks"| DB
+    GEN ==>|"finding · risk · citations"| FE
+
+    classDef fe fill:#0f2747,stroke:#3b82f6,color:#dbeafe;
+    classDef be fill:#0f3320,stroke:#22c55e,color:#dcfce7;
+    classDef pl fill:#27272a,stroke:#a1a1aa,color:#fafafa;
+    classDef store fill:#27214d,stroke:#818cf8,color:#e0e7ff;
+    classDef model fill:#3a2a14,stroke:#f59e0b,color:#fde68a;
+
+    class F1,F2,F3,F4 fe;
+    class UP,QY,DOC,HL be;
+    class ING,EMB,RET,GEN pl;
+    class DB store;
+    class LLM model;
+```
 ## Tech stack
 
 | Layer | Tech |
