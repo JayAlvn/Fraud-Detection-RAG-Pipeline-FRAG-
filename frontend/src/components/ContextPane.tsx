@@ -105,8 +105,8 @@ export function ContextPane({
           <div className="h-full" style={{ width: `${completionPct}%`, backgroundColor: '#3b82f6' }} />
         </div>
         <div className="flex justify-between text-sm mb-4">
-          <span>{total.toLocaleString()} / {windowSize.toLocaleString()} tokens</span>
-          <span className="font-medium" style={{ color: pct > 80 ? '#ef4444' : '#22c55e' }}>{pct}%</span>
+          <span className="font-semibold tabular-nums">{total.toLocaleString()} / {windowSize.toLocaleString()} tokens</span>
+          <span className="font-bold" style={{ color: pct > 80 ? '#ef4444' : '#16a34a' }}>{pct}%</span>
         </div>
 
         <div className="space-y-2 text-sm">
@@ -115,27 +115,27 @@ export function ContextPane({
               <div className="w-2.5 h-2.5 rounded-sm bg-[#22c55e]" />
               <span style={{ color: 'var(--text-muted)' }}>Prompt (context + question)</span>
             </div>
-            <span className="tabular-nums">{usage.prompt_tokens.toLocaleString()}</span>
+            <span className="font-semibold tabular-nums">{usage.prompt_tokens.toLocaleString()}</span>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-2.5 h-2.5 rounded-sm bg-[#3b82f6]" />
               <span style={{ color: 'var(--text-muted)' }}>Response (generated)</span>
             </div>
-            <span className="tabular-nums">{usage.completion_tokens.toLocaleString()}</span>
+            <span className="font-semibold tabular-nums">{usage.completion_tokens.toLocaleString()}</span>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: 'var(--border-color)' }} />
               <span style={{ color: 'var(--text-muted)' }}>Available</span>
             </div>
-            <span className="tabular-nums">{available.toLocaleString()}</span>
+            <span className="font-semibold tabular-nums">{available.toLocaleString()}</span>
           </div>
         </div>
 
         <div className="mt-3 pt-3 flex justify-between text-sm" style={{ borderTop: '1px solid var(--border-color)' }}>
           <span style={{ color: 'var(--text-muted)' }}>Session total burned</span>
-          <span className="font-medium tabular-nums">{tokensBurned.toLocaleString()}</span>
+          <span className="font-bold tabular-nums">{tokensBurned.toLocaleString()}</span>
         </div>
       </div>
 

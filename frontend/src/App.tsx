@@ -13,6 +13,7 @@ type Retrieval = { source: string; score: number };
 type Risk = { level: string; score: number; factors: { name: string; weight: number }[] };
 type Doc = { id: string; name: string; chunks: number };
 type Usage = { prompt_tokens: number; completion_tokens: number; total_tokens: number; context_window: number };
+type Confidence = { level: string; score: number };
 
 const EMPTY_USAGE: Usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, context_window: 4096 };
 
@@ -22,6 +23,7 @@ function App() {
   const [citations, setCitations] = useState<string[]>([]);
   const [retrieval, setRetrieval] = useState<Retrieval[]>([]);
   const [risk, setRisk] = useState<Risk>({ level: '', score: 0, factors: [] });
+  const [confidence, setConfidence] = useState<Confidence>({ level: '', score: 0 });
   const [mode, setMode] = useState<'naive' | 'basic'>('naive');
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -59,6 +61,7 @@ function App() {
         score: data.risk_score ?? 0,
         factors: data.factors ?? [],
       });
+      setConfidence({ level: data.confidence_level ?? '', score: data.confidence ?? 0 });
       const u: Usage = data.usage ?? EMPTY_USAGE;
       setUsage(u);
       setTokensBurned(t => t + (u.total_tokens ?? 0));
@@ -69,6 +72,7 @@ function App() {
       setCitations([]);
       setRetrieval([]);
       setRisk({ level: '', score: 0, factors: [] });
+      setConfidence({ level: '', score: 0 });
       setUsage(EMPTY_USAGE);
       setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${msg}` }]);
     } finally {
@@ -137,6 +141,7 @@ function App() {
                 loading={loading}
                 mode={mode}
                 risk={risk}
+                confidence={confidence}
                 accent={theme.accent}
               />
             </div>

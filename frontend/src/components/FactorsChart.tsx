@@ -11,7 +11,7 @@ export function FactorsChart({ data, color }: { data: Factor[]; color: string })
           <div key={i} className="w-full min-w-0">
             <div className="flex items-baseline justify-between gap-3 mb-1">
               <span
-                className="text-[13px] leading-snug"
+                className="text-[13px] font-medium leading-snug"
                 style={{ color: 'var(--text-main)' }}
               >
                 {f.name}

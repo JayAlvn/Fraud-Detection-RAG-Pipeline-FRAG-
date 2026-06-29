@@ -20,7 +20,7 @@ export function RetrievalChart({ data, color }: { data: RetrievalItem[]; color: 
             width={72}
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 11, fill: 'var(--text-muted)' }}
+            tick={{ fontSize: 11, fontWeight: 600, fill: 'var(--text-main)' }}
           />
         <Tooltip
             cursor={{ fill: 'transparent' }}

@@ -26,13 +26,13 @@ export const THEMES: { name: string; colors: ThemeColors }[] = [
   {
     name: 'Daylight',
     colors: {
-      bg: '#EDF0F4',        // app background — soft slate, sits behind panels
+      bg: '#E2E8F0',        // app background — slate-200, frames the white panels with clear separation
       panelBg: '#FFFFFF',   // panels — crisp white
-      cardBg: '#EEF2F7',    // cards & chart tracks — light slate, visible on white
-      text: '#0F172A',      // primary text — slate-900, strong but not harsh black
-      textMuted: '#64748B', // secondary text — slate-500
-      border: '#D2D9E2',    // borders — clearly visible, not washed out
-      accent: '#2563EB',    // vibrant blue — fixes the black bars/bubbles
+      cardBg: '#EDF1F7',    // cards & chart tracks — light slate, distinct from white panels
+      text: '#0B1220',      // primary text — near-black slate, maximum legibility
+      textMuted: '#475569', // secondary text — slate-600, far stronger than the old washed-out slate-500
+      border: '#B8C2D0',    // borders — slate-300+, clearly defined card edges
+      accent: '#1D4ED8',    // blue-700 — deeper, higher-contrast accent on white
       accentText: '#FFFFFF'
     }
   }

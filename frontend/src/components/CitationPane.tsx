@@ -29,7 +29,7 @@ export function CitationPane({ citations, retrieval, accent }: CitationPaneProps
               className="text-[10px] font-semibold uppercase tracking-wider mb-1.5"
               style={{ color: 'var(--text-muted)' }}
             >
-              Retrieval Relevance
+              Retrieval Relevance (how well do the retrieved passages match the query)
             </p>
             <RetrievalChart data={retrieval} color={accent} />
           </div>
@@ -59,7 +59,7 @@ export function CitationPane({ citations, retrieval, accent }: CitationPaneProps
                   Source {idx + 1}
                 </p>
                 <p
-                  className="text-[20px] leading-relaxed break-words"
+                  className="text-[20px] font-medium leading-relaxed break-words"
                   style={{ color: 'var(--text-main)', overflowWrap: 'anywhere' }}
                 >
                   {passage}

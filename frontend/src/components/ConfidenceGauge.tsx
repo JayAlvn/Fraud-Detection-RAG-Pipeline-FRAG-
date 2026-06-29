@@ -1,15 +1,15 @@
 import { RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts';
 
-// Colour by score, not by label — red only when risk is genuinely high.
-function riskColor(score: number): string {
-  if (score >= 65) return '#ef4444';   // red — really high
+// Colour by score, not by label — red only when confidence is genuinely low.
+function confidenceColor(score: number): string {
+  if (score >= 65) return '#22c55e';   // green — trustworthy
   if (score >= 35) return '#f59e0b';   // amber — moderate
-  return '#22c55e';                    // green — low
+  return '#ef4444';                    // red — really low
 }
 
-export function RiskGauge({ score, level }: { score: number; level: string }) {
+export function ConfidenceGauge({ score, level }: { score: number; level: string }) {
   const data = [{ value: score }];
-  const color = riskColor(score);
+  const color = confidenceColor(score);
   return (
     <div style={{ position: 'relative', width: 140, height: 140 }}>
       <RadialBarChart width={140} height={140} cx="50%" cy="50%"
