@@ -19,7 +19,6 @@ def store_chunks(chunks: list[str], doc_name: str):
           metadatas = metadatas
     )
 
-
 def query(query_text: str, n=1, source: str | None = None) -> list[str]:
     query_vector = embed_text(query_text)
     where = {"source": source} if source else None
@@ -27,8 +26,10 @@ def query(query_text: str, n=1, source: str | None = None) -> list[str]:
     return results['documents'][0], results['distances'][0]
 
 def get_all_chunks(source: str | None = None):
+
     where = {"source": source} if source else None
     data = collection.get(where=where, include=['documents'])
+
     return data["ids"], data["documents"]
 
 
@@ -37,16 +38,23 @@ def semantic_rank(query_text: str, source: str | None = None):
     total = len(ids_all)
     if total == 0:
         return []
+
     query_vector = embed_text(query_text)
+
     where  = {"source": source} if source else None
+
     results = collection.query(
         query_embeddings = [query_vector],
         n_results = total,
         where=where,
+        include =["documents, distances, metadatas"],
     )
-    return list(zip(results["ids"][0],
-    results["documents"][0], results["distances"][0]))
-
+    return list(zip(
+        results["ids"][0],
+        results["documents"][0],
+        results["distances"][0],
+        results["metadata"][0],
+    ))
 
 def delete_document(doc_name: str):
     collection.delete(where={"source": doc_name})
