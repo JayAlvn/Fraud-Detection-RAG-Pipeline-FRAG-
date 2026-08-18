@@ -5,9 +5,11 @@ chromadb
 sentence-transformers
 langchain-text-splitters
 pypdf
+pymupdf
+wordninja
 python-docx
 python-dotenv
 pytest
 python-multipart
-lamma
+ollama
 rank-bm25

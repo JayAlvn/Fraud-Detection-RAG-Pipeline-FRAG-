@@ -19,7 +19,7 @@ def test_naive_returns_correct_keys():
 
 def test_naive_mode_is_correct():
     result = NaiveBackend().generate("test", ["chunk_one"])
-    assert result["mode"] == "naive"
+    assert result["mode"] == "semantic search (retrieval only)"
 
 def test_naive_source_matches_input():
     chunks = ["first_chunk","second_chunk"]

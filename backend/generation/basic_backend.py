@@ -3,7 +3,7 @@ import json
 from generation.base import Base
 
 MODEL = "llama3.2"
-#size of the model's working memory in tokens
+
 CONTEXT_WINDOW= 4096 #sized for gtx1650
 
 

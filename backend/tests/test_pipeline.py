@@ -1,7 +1,5 @@
-from pdb import run
 import pytest
 from pathlib import Path
-from backend import pipeline
 from pipeline.pipeline import run_pipeline
 
 FIXTURE = Path(__file__).parent / "fixtures" / "Architecture.pdf"
@@ -12,7 +10,7 @@ def test_pipeline_naive_returns_dict():
     result = run_pipeline(str(FIXTURE), "What is an architectural pattern?", mode="naive")
     
     assert isinstance(result, dict)
-    assert result["mode"] == "naive"
+    assert result["mode"] == "semantic search (retrieval only)"
     assert len(result["sources"]) > 0
 
     
