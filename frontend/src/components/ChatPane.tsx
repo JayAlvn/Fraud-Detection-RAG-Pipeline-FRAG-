@@ -8,9 +8,19 @@ type ChatPaneProps = {
   loading: boolean;
   mode: 'naive' | 'basic';
   setMode: (mode: 'naive' | 'basic') => void;
+  activeDoc: string | null;
+  sourceCount: number;
+  setSourceCount: (n: number) => void;
+  /** null when the backend hasn't reported yet. */
+  modelLoaded: boolean | null;
 };
 
-export function ChatPane({ messages, onSend, loading, mode, setMode }: ChatPaneProps) {
+const SOURCE_CHOICES = [2, 3, 4, 6, 8, 10, 12];
+
+export function ChatPane({
+  messages, onSend, loading, mode, setMode, activeDoc, sourceCount, setSourceCount,
+  modelLoaded,
+}: ChatPaneProps) {
   const [text, setText] = useState('');
 
   const submit = () => {
@@ -69,6 +79,51 @@ export function ChatPane({ messages, onSend, loading, mode, setMode }: ChatPaneP
 
       {/* Input */}
       <div className="shrink-0 p-4" style={{ borderTop: '1px solid var(--border-color)' }}>
+        {/* Scope is the easiest thing to get wrong, so it sits next to the input. */}
+        <div className="mb-2 flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--text-muted)' }}>
+          <span>Asking about</span>
+          <span
+            className="rounded-full px-2 py-0.5 font-medium max-w-[60%] truncate"
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              border: '1px solid var(--border-color)',
+              color: activeDoc ? 'var(--accent-color)' : 'var(--text-muted)',
+            }}
+            title={activeDoc ?? 'Every indexed document'}
+          >
+            {activeDoc ?? 'all documents'}
+          </span>
+        </div>
+
+        {/* Query controls sit with the scope, above the box they apply to. */}
+        <div
+          className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-2 text-[11px]"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          <span>RAG mode:</span>
+          {modeButton('basic')}
+          {modeButton('naive')}
+
+          <label className="ml-auto flex items-center gap-1.5">
+            <span>Sources</span>
+            <select
+              value={sourceCount}
+              onChange={(e) => setSourceCount(Number(e.target.value))}
+              className="rounded-full px-2 py-1 text-xs font-medium outline-none cursor-pointer"
+              style={{
+                backgroundColor: 'var(--card-bg)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-main)',
+              }}
+              title="How many passages to retrieve and cite"
+            >
+              {SOURCE_CHOICES.map(n => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -83,9 +138,14 @@ export function ChatPane({ messages, onSend, loading, mode, setMode }: ChatPaneP
           className="w-full resize-none rounded-xl p-3 text-sm outline-none"
           style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}
         />
+        {/* Set the expectation before the wait, not after it. */}
+        {modelLoaded === false && mode === 'basic' && (
+          <p className="mt-2 text-[11px]" style={{ color: '#f59e0b' }}>
+            Model not loaded — the first query spends ~10s reloading it.
+          </p>
+        )}
+
         <div className="mt-2 flex items-center gap-2">
-          {modeButton('naive')}
-          {modeButton('basic')}
           <button
             type="button"
             onClick={submit}

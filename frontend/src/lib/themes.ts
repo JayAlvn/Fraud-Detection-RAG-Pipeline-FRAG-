@@ -26,12 +26,14 @@ export const THEMES: { name: string; colors: ThemeColors }[] = [
   {
     name: 'Daylight',
     colors: {
-      bg: '#E2E8F0',        // app background — slate-200, frames the white panels with clear separation
+      // Surfaces step app -> card -> panel. The steps were previously ~1.1:1,
+      // so cards vanished into the panels and an unfilled bar read as nothing.
+      bg: '#D6DEEA',        // app background — deeper slate, so white panels read as raised
       panelBg: '#FFFFFF',   // panels — crisp white
-      cardBg: '#EDF1F7',    // cards & chart tracks — light slate, distinct from white panels
+      cardBg: '#E3EAF3',    // cards & chart tracks — a real step below the white panels
       text: '#0B1220',      // primary text — near-black slate, maximum legibility
-      textMuted: '#475569', // secondary text — slate-600, far stronger than the old washed-out slate-500
-      border: '#B8C2D0',    // borders — slate-300+, clearly defined card edges
+      textMuted: '#43506B', // secondary text — slate, holds up on both panel and card
+      border: '#A9B6C9',    // borders & bar tracks — defined against white and card alike
       accent: '#1D4ED8',    // blue-700 — deeper, higher-contrast accent on white
       accentText: '#FFFFFF'
     }

@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { MoreHorizontalIcon, FileIcon, XIcon, UploadIcon } from './Icons';
+import { FileIcon, XIcon, UploadIcon } from './Icons';
+import { MachinePane } from './MachinePane';
+import type { MachineStats, Timings } from '../lib/useMachineStats';
 
 type Doc = { id: string; name: string; chunks: number };
 type Usage = {
@@ -16,6 +18,9 @@ type ContextPaneProps = {
   setActiveDoc: (name: string | null) => void;
   usage: Usage;
   tokensBurned: number;
+  lastMs: number | null;
+  machine: MachineStats | null;
+  timings: Timings | null;
 };
 
 export function ContextPane({
@@ -25,12 +30,17 @@ export function ContextPane({
   setActiveDoc,
   usage,
   tokensBurned,
+  lastMs,
+  machine,
+  timings,
 }: ContextPaneProps) {
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
     setUploading(true);
+    setUploadError(null);
     const formData = new FormData();
     formData.append('file', file);
     try {
@@ -44,7 +54,7 @@ export function ContextPane({
       ]);
       setActiveDoc(data.filename); // auto-scope queries to the doc you just added
     } catch {
-      alert('Upload failed — is the backend running?');
+      setUploadError('Upload failed — is the backend running on localhost:8000?');
     } finally {
       setUploading(false);
     }
@@ -95,9 +105,6 @@ export function ContextPane({
           <h3 className="text-[11px] font-semibold tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
             Context Window
           </h3>
-          <button className="p-1 rounded-md" style={{ color: 'var(--text-muted)' }}>
-            <MoreHorizontalIcon />
-          </button>
         </div>
 
         <div className="h-1.5 w-full rounded-full overflow-hidden mb-2 flex" style={{ backgroundColor: 'var(--card-bg)' }}>
@@ -133,13 +140,28 @@ export function ContextPane({
           </div>
         </div>
 
-        <div className="mt-3 pt-3 flex justify-between text-sm" style={{ borderTop: '1px solid var(--border-color)' }}>
-          <span style={{ color: 'var(--text-muted)' }}>Session total burned</span>
-          <span className="font-bold tabular-nums">{tokensBurned.toLocaleString()}</span>
+        <div className="mt-3 pt-3 space-y-1.5 text-sm" style={{ borderTop: '1px solid var(--border-color)' }}>
+          <div className="flex justify-between">
+            <span style={{ color: 'var(--text-muted)' }}>Session total burned</span>
+            <span className="font-bold tabular-nums">{tokensBurned.toLocaleString()}</span>
+          </div>
+          {lastMs !== null && (
+            <div className="flex justify-between">
+              <span style={{ color: 'var(--text-muted)' }}>Last query</span>
+              <span className="font-bold tabular-nums">{(lastMs / 1000).toFixed(1)}s</span>
+            </div>
+          )}
         </div>
       </div>
 
       <hr style={{ borderColor: 'var(--border-color)' }} className="mb-5" />
+
+      {machine && (
+        <>
+          <MachinePane machine={machine} timings={timings} />
+          <hr style={{ borderColor: 'var(--border-color)' }} className="my-5" />
+        </>
+      )}
 
       {/* Loaded Documents */}
       <div>
@@ -187,9 +209,18 @@ export function ContextPane({
 
           {/* Upload dropzone */}
           <div
+            role="button"
+            tabIndex={0}
+            aria-label="Add a document"
             className="mt-2 cursor-pointer rounded-xl border border-dashed py-6 px-4 text-center flex flex-col items-center gap-2 transition hover:opacity-70"
             style={{ borderColor: uploading ? 'var(--accent-color)' : 'var(--border-color)' }}
             onClick={() => !uploading && fileInputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (!uploading) fileInputRef.current?.click();
+              }
+            }}
           >
             <div style={{ color: 'var(--text-muted)' }}>
               <UploadIcon />
@@ -205,6 +236,16 @@ export function ContextPane({
               className="hidden"
             />
           </div>
+
+          {uploadError && (
+            <p
+              className="text-xs px-1 pt-1"
+              style={{ color: '#ef4444' }}
+              role="alert"
+            >
+              {uploadError}
+            </p>
+          )}
         </div>
       </div>
     </div>
