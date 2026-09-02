@@ -1,7 +1,5 @@
-# F-RAG — Fraud Detection RAG Pipeline
-
-A desktop application that uses **Retrieval-Augmented Generation (RAG)** to analyse
-enterprise documents, answer questions about them, and flag **fraud risk** with a
+A desktop application that uses **Retrieval-Augmented Generation (RAG)** to analyze
+enterprise documents with dense cross-referencing, answer questions about them, as well as flag  **fraud risk** with a
 confidence-scored, source-cited breakdown for human review.
 
 Built with a **Python / FastAPI** backend (ChromaDB + local embeddings + a local
