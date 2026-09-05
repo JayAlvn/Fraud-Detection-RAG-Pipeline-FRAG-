@@ -37,3 +37,45 @@ export function shortLocation(item?: RetrievalItem): string {
   if (item.article !== undefined) return `${page} Art.${item.article}`.trim();
   return page;
 }
+
+/* ── Conversation turns ──────────────────────────────────────────────────── */
+
+export type Risk = { level: string; score: number; factors: { name: string; weight: number }[] };
+export type Confidence = { level: string; score: number };
+export type Usage = {
+  prompt_tokens: number; completion_tokens: number;
+  total_tokens: number; context_window: number;
+};
+
+/** Everything the panes need to redisplay one answer without re-querying the
+ *  backend. Captured per turn so the transcript can act as an index into past
+ *  evidence rather than a second copy of the latest answer. */
+export type Turn = {
+  finding: string;
+  citations: string[];
+  retrieval: RetrievalItem[];
+  risk: Risk;
+  confidence: Confidence;
+  usage: Usage;
+  timings: { retrieval_ms: number; generation_ms: number } | null;
+  ms: number;
+};
+
+export type Message = {
+  id: number;
+  role: 'user' | 'assistant';
+  content: string;
+  /** Present only on assistant turns that succeeded. Its absence is what makes
+   *  a bubble non-clickable -- errors and user messages have nothing to restore. */
+  turn?: Turn;
+};
+
+/** Strip Private Use Area characters (U+E000–U+F8FF).
+ *
+ *  PDFs that draw bullets with Symbol or Wingdings map those glyphs into the
+ *  PUA, and they survive text extraction as boxes -- U+F0A1 appears 52 times in
+ *  Architecture.pdf alone. Applied at render time so documents already indexed
+ *  display correctly without being re-ingested. */
+export function stripPua(text: string): string {
+  return text.replace(/[\uE000-\uF8FF]/g, '');
+}

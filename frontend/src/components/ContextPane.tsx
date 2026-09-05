@@ -2,14 +2,9 @@ import React, { useState, useRef } from 'react';
 import { FileIcon, XIcon, UploadIcon } from './Icons';
 import { MachinePane } from './MachinePane';
 import type { MachineStats, Timings } from '../lib/useMachineStats';
+import type { Usage } from '../lib/utils';
 
 type Doc = { id: string; name: string; chunks: number };
-type Usage = {
-  prompt_tokens: number;
-  completion_tokens: number;
-  total_tokens: number;
-  context_window: number;
-};
 
 type ContextPaneProps = {
   documents: Doc[];

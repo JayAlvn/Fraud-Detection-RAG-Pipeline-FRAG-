@@ -2,9 +2,8 @@ import { RiskGauge } from './RiskGauge';
 import { ConfidenceGauge } from './ConfidenceGauge';
 import { FactorsChart } from './FactorsChart';
 import { ChevronUpIcon, ChevronDownIcon } from './Icons';
+import type { Risk, Confidence } from '../lib/utils';
 
-type Risk = { level: string; score: number; factors: { name: string; weight: number }[] };
-type Confidence = { level: string; score: number };
 
 type FindingPaneProps = {
   finding: string;

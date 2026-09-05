@@ -40,12 +40,27 @@
   flex-shrink: 0;
   width: 1px;
   background-color: var(--border-color);
-  transition: background-color 0.15s ease, width 0.15s ease;
+  cursor: col-resize;
+  transition: background-color 0.15s ease, width 0.15s ease, height 0.15s ease;
 }
 
 .panel-separator:hover {
   width: 4px;
   background-color: var(--accent-color);
+}
+
+/* In a vertical group the divider runs horizontally, so the 1px belongs to
+   height instead of width -- without this it inherits width:1px and collapses
+   to nothing, leaving a handle that renders but cannot be grabbed. */
+.panel-separator-vertical {
+  width: 100%;
+  height: 1px;
+  cursor: row-resize;
+}
+
+.panel-separator-vertical:hover {
+  width: 100%;
+  height: 4px;
 }
 
 [data-panel] {

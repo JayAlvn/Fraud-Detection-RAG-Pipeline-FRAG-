@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Group, Panel, Separator, type PanelImperativeHandle } from 'react-resizable-panels';
 import { THEMES, ThemeColors } from './lib/themes';
-import type { RetrievalItem } from './lib/utils';
+import type { RetrievalItem, Message, Turn, Risk, Confidence, Usage } from './lib/utils';
 import { useMachineStats, type Timings } from './lib/useMachineStats';
 import { MessageSquareIcon } from './components/Icons';
 import { FindingPane } from './components/FindingPane';
@@ -10,11 +10,7 @@ import { ChatPane } from './components/ChatPane';
 import { ContextPane } from './components/ContextPane';
 import './App.css';
 
-type Message = { role: 'user' | 'assistant'; content: string };
-type Risk = { level: string; score: number; factors: { name: string; weight: number }[] };
 type Doc = { id: string; name: string; chunks: number };
-type Usage = { prompt_tokens: number; completion_tokens: number; total_tokens: number; context_window: number };
-type Confidence = { level: string; score: number };
 
 const EMPTY_USAGE: Usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, context_window: 4096 };
 
@@ -33,6 +29,13 @@ function App() {
   const [findingCollapsed, setFindingCollapsed] = useState(false);
   const [sourceCount, setSourceCount] = useState(6);
 
+  // Which answer the left-hand panes are showing. Follows the newest turn, but
+  // clicking an older card in the transcript points it back at that one.
+  const [activeTurnId, setActiveTurnId] = useState<number | null>(null);
+
+  // Message identity has to survive list growth, so it can't be the array index.
+  const nextId = useRef(0);
+
   // A query takes several seconds, so show the clock running rather than a dead label.
   const [elapsedMs, setElapsedMs] = useState(0);
   const [lastMs, setLastMs] = useState<number | null>(null);
@@ -43,6 +46,7 @@ function App() {
 
   // The chat panel is collapsed rather than unmounted, so widths you drag survive the toggle.
   const chatPanel = useRef<PanelImperativeHandle | null>(null);
+  const findingPanel = useRef<PanelImperativeHandle | null>(null);
 
   // Lifted up from ContextPane so they survive the chat-toggle remount:
   const [documents, setDocuments] = useState<Doc[]>([]);
@@ -72,9 +76,41 @@ function App() {
     }
   };
 
+  // Collapsing has to go through the panel, not just the pane's own markup:
+  // inside a resizable Group the library owns the height, so hiding the body
+  // alone leaves the header stranded above the space it used to fill.
+  const toggleFinding = () => {
+    const panel = findingPanel.current;
+    if (!panel) return;
+    if (panel.isCollapsed()) {
+      panel.expand();
+      setFindingCollapsed(false);
+    } else {
+      panel.collapse();
+      setFindingCollapsed(true);
+    }
+  };
+
+  /** Repoint the panes at an answer already in the transcript. No refetch --
+   *  every turn keeps its own evidence, so this is pure local state. */
+  const restoreTurn = (message: Message) => {
+    if (!message.turn || loading) return;
+    const t = message.turn;
+    setFinding(t.finding);
+    setCitations(t.citations);
+    setRetrieval(t.retrieval);
+    setRisk(t.risk);
+    setConfidence(t.confidence);
+    setUsage(t.usage);
+    setTimings(t.timings);
+    setLastMs(t.ms);
+    setError(null);
+    setActiveTurnId(message.id);
+  };
+
   const sendPrompt = async (prompt: string) => {
     const started = performance.now();
-    setMessages(prev => [...prev, { role: 'user', content: prompt }]);
+    setMessages(prev => [...prev, { id: ++nextId.current, role: 'user', content: prompt }]);
     setLoading(true);
     setFinding('');
     setError(null);
@@ -89,20 +125,36 @@ function App() {
         throw new Error(`HTTP ${res.status} — ${detail}`);
       }
       const data = await res.json();
-      setFinding(data.finding);
-      setCitations(data.sources ?? []);
-      setRetrieval(data.retrieval ?? []);
-      setRisk({
-        level: data.risk_level ?? '',
-        score: data.risk_score ?? 0,
-        factors: data.factors ?? [],
-      });
-      setConfidence({ level: data.confidence_level ?? '', score: data.confidence ?? 0 });
-      setTimings(data.timings ?? null);
-      const u: Usage = data.usage ?? EMPTY_USAGE;
-      setUsage(u);
-      setTokensBurned(t => t + (u.total_tokens ?? 0));
-      setMessages(prev => [...prev, { role: 'assistant', content: data.finding }]);
+
+      // Assembled once, then used for both the live panes and the transcript
+      // card, so the two can never drift apart.
+      const turn: Turn = {
+        finding: data.finding,
+        citations: data.sources ?? [],
+        retrieval: data.retrieval ?? [],
+        risk: {
+          level: data.risk_level ?? '',
+          score: data.risk_score ?? 0,
+          factors: data.factors ?? [],
+        },
+        confidence: { level: data.confidence_level ?? '', score: data.confidence ?? 0 },
+        usage: data.usage ?? EMPTY_USAGE,
+        timings: data.timings ?? null,
+        ms: performance.now() - started,
+      };
+
+      setFinding(turn.finding);
+      setCitations(turn.citations);
+      setRetrieval(turn.retrieval);
+      setRisk(turn.risk);
+      setConfidence(turn.confidence);
+      setTimings(turn.timings);
+      setUsage(turn.usage);
+      setTokensBurned(t => t + (turn.usage.total_tokens ?? 0));
+
+      const id = ++nextId.current;
+      setMessages(prev => [...prev, { id, role: 'assistant', content: turn.finding, turn }]);
+      setActiveTurnId(id);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       setError(msg);
@@ -113,7 +165,9 @@ function App() {
       setConfidence({ level: '', score: 0 });
       setUsage(EMPTY_USAGE);
       setTimings(null);
-      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${msg}` }]);
+      // No turn attached: a failed query has no evidence to restore, which is
+      // what keeps the error bubble unclickable.
+      setMessages(prev => [...prev, { id: ++nextId.current, role: 'assistant', content: `Error: ${msg}` }]);
     } finally {
       setLastMs(performance.now() - started);
       setLoading(false);
@@ -175,11 +229,25 @@ function App() {
       {/* Main Layout */}
       <Group orientation="horizontal" className="h-full w-full">
 
-        {/* Left: Finding (top half) + Citations (bottom half) */}
+        {/* Left: Finding (top) + Citations (bottom), independently resizable */}
         <Panel id="left" defaultSize={40} minSize={20} className="min-w-0">
-          <div className="flex flex-col h-full">
-            <div
-              className={findingCollapsed ? 'shrink-0 overflow-hidden' : 'flex-1 min-h-0 overflow-hidden'}
+          <Group orientation="vertical" className="h-full w-full">
+            <Panel
+              id="finding"
+              defaultSize={45}
+              minSize={15}
+              collapsible
+              // Leaves the header row visible when collapsed, so the chevron
+              // stays reachable. String sizes take CSS units.
+              collapsedSize="56px"
+              panelRef={findingPanel}
+              // Dragging the divider past minSize collapses the panel too, so
+              // read the collapsed state back rather than trusting the button.
+              onResize={() => {
+                const panel = findingPanel.current;
+                if (panel) setFindingCollapsed(panel.isCollapsed());
+              }}
+              className="overflow-hidden"
               style={{ borderBottom: '1px solid var(--border-color)' }}
             >
               <FindingPane
@@ -192,13 +260,16 @@ function App() {
                 confidence={confidence}
                 accent={theme.accent}
                 collapsed={findingCollapsed}
-                onToggleCollapse={() => setFindingCollapsed(v => !v)}
+                onToggleCollapse={toggleFinding}
               />
-            </div>
-            <div className="flex-1 min-h-0 overflow-hidden">
+            </Panel>
+
+            <Separator className="panel-separator panel-separator-vertical" />
+
+            <Panel id="citations" defaultSize={55} minSize={15} className="overflow-hidden">
               <CitationPane citations={citations} retrieval={retrieval} />
-            </div>
-          </div>
+            </Panel>
+          </Group>
         </Panel>
 
         <Separator
@@ -230,6 +301,8 @@ function App() {
             sourceCount={sourceCount}
             setSourceCount={setSourceCount}
             modelLoaded={machine?.model ? machine.model.loaded : null}
+            onSelectTurn={restoreTurn}
+            activeTurnId={activeTurnId}
           />
         </Panel>
 

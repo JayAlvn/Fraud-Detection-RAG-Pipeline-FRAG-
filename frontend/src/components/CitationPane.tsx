@@ -1,4 +1,4 @@
-import { locationLabel, type RetrievalItem } from '../lib/utils';
+import { locationLabel, stripPua, type RetrievalItem } from '../lib/utils';
 
 type CitationPaneProps = {
   citations: string[];
@@ -85,7 +85,7 @@ export function CitationPane({ citations, retrieval }: CitationPaneProps) {
                     className="text-[13px] leading-relaxed break-words"
                     style={{ color: 'var(--text-main)', overflowWrap: 'anywhere' }}
                   >
-                    {passage}
+                    {stripPua(passage)}
                   </p>
                 </div>
               );
