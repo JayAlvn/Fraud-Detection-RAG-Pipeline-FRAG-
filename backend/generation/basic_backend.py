@@ -6,7 +6,6 @@ MODEL = "llama3.2"
 
 CONTEXT_WINDOW= 4096 #sized for gtx1650
 
-
 def _grab(response, key: str) -> int:
     try:
         value = response[key]
@@ -14,9 +13,22 @@ def _grab(response, key: str) -> int:
         value = None
     return int(value) if value else 0
 
+def _interleave_for_attention(chunks: list[str]) -> list[str]:
+    front, back = [], []
+    for position, chunk in enumerate(chunks):
+        if position % 2 == 0:
+            front.append(chunk)
+        else:
+            back.append(chunk)
+    back.reverse()
+
+    return front + back
+
 class BasicBackend(Base):
     def generate(self, query: str, chunks: list[str]) -> dict:
-        context = "\n\n".join(f"[{i + 1}] {c}" for i, c in enumerate(chunks))
+
+        ordered_chunks = _interleave_for_attention(chunks)
+        context = "\n\n".join(f"[{i + 1}] {c}" for i, c in enumerate(ordered_chunks))
 
         prompt = (
             "You are a fraud-detection assistant analyzing a document.\n"
@@ -68,6 +80,10 @@ class BasicBackend(Base):
 
         prompt_tokens = _grab(response, "prompt_eval_count")
         completion_tokens = _grab(response, "eval_count")
+
+
+
+        
 
         return {
             "finding": finding,
