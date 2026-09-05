@@ -3,12 +3,15 @@ import unicodedata
 import wordninja
 
 _JUNK_BLOCKS = re.compile(
-    r'[─-╿'   # Box Drawing
-    r'▀-▟'    # Block Elements
-    r'■-◿'    # Geometric Shapes (■ □ ▪ ▫)
-    r'☀-⛿'    # Miscellaneous Symbols
-    r'�'           # Replacement character
-    r'￾￿]',   # Non-characters
+    r'[─-╿'          # Box Drawing
+    r'▀-▟'           # Block Elements
+    r'■-◿'           # Geometric Shapes (■ □ ▪ ▫)
+    r'☀-⛿'           # Miscellaneous Symbols
+    # Private Use Area: symbol-font bullets (Wingdings etc.) that PDF
+    # extraction copies as raw code points with no glyph in any real font.
+    r'\uE000-\uF8FF'
+    r'�'              # Replacement character
+    r'￾￿]',          # Non-characters
     re.UNICODE
 )
 
